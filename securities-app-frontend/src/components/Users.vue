@@ -1,22 +1,31 @@
 <template>
   <div>
-    <h2>Users</h2>
-    <form @submit.prevent="createUser">
-      <input v-model="newUser.username" placeholder="Username" />
-      <input v-model="newUser.password" type="password" placeholder="Password" />
-      <button type="submit">Create User</button>
+    <h1>User Management</h1>
+    <form @submit.prevent="addUser">
+      <div>
+        <label for="username">Username:</label>
+        <input type="text" v-model="newUser.username" required>
+      </div>
+      <div>
+        <label for="password">Password:</label>
+        <input type="password" v-model="newUser.password" required>
+      </div>
+      <button type="submit">Add User</button>
     </form>
-    <ul>
-      <li v-for="user in users" :key="user.id">
-        {{ user.username }}
-        <button @click="deleteUser(user.id)">Delete</button>
-      </li>
-    </ul>
+    <div v-if="users.length">
+      <h2>Users</h2>
+      <ul>
+        <li v-for="user in users" :key="user.id">
+          {{ user.username }}
+          <button @click="editUser(user)">Edit</button>
+          <button @click="deleteUser(user.id)">Delete</button>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
 export default {
   data () {
     return {
@@ -27,21 +36,40 @@ export default {
       users: []
     }
   },
-  async created () {
-    this.loadUsers()
+  created () {
+    this.fetchUsers()
   },
   methods: {
-    async loadUsers () {
-      const response = await axios.get('/api/users')
-      this.users = response.data
+    async fetchUsers () {
+      const response = await fetch('http://localhost:3000/api/users', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      this.users = await response.json()
     },
-    async createUser () {
-      await axios.post('/api/users', this.newUser)
-      this.loadUsers()
+    async addUser () {
+      await fetch('http://localhost:3000/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(this.newUser)
+      })
+      this.fetchUsers()
     },
-    async deleteUser (userId) {
-      await axios.delete(`/api/users/${userId}`)
-      this.loadUsers()
+    async editUser (user) {
+      // Implement user editing logic
+    },
+    async deleteUser (id) {
+      await fetch(`http://localhost:3000/api/users/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      this.fetchUsers()
     }
   }
 }

@@ -12,8 +12,22 @@ app.use(bodyParser.json());
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 
-db.sequelize.sync().then(() => {
-    app.listen(3000, () => {
-        console.log('Server is running on port 3000');
+db.sequelize.authenticate()
+    .then(() => {
+        console.log('Connection has been established successfully.');
+        return db.sequelize.sync();
+    })
+    .then(() => {
+        console.log('Database synchronized successfully.');
+        app.listen(3000, () => {
+            console.log('Server is running on port 3000');
+
+            // Test route to check server functionality
+            app.get('/test', (req, res) => {
+                res.send('Server is running and connected to the database!');
+            });
+        });
+    })
+    .catch(err => {
+        console.error('Unable to connect to the database:', err);
     });
-});

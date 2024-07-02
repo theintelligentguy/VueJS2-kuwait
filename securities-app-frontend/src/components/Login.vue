@@ -1,34 +1,52 @@
 <template>
   <div>
-    <h2>Login</h2>
     <form @submit.prevent="login">
-      <input v-model="username" placeholder="Username" />
-      <input v-model="password" type="password" placeholder="Password" />
+      <div>
+        <label for="username">Username:</label>
+        <input type="text" v-model="username" required>
+      </div>
+      <div>
+        <label for="password">Password:</label>
+        <input type="password" v-model="password" required>
+      </div>
       <button type="submit">Login</button>
     </form>
+    <div v-if="errorMessage">{{ errorMessage }}</div>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
 export default {
   data () {
     return {
       username: '',
-      password: ''
+      password: '',
+      errorMessage: ''
     }
   },
   methods: {
     async login () {
       try {
-        const response = await axios.post('/api/auth/login', {
-          username: this.username,
-          password: this.password
+        const response = await fetch('http://localhost:3000/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: this.username,
+            password: this.password
+          })
         })
-        localStorage.setItem('token', response.data.token)
-        this.$router.push('/dashboard')
+
+        const data = await response.json()
+        if (response.ok) {
+          localStorage.setItem('token', data.token)
+          this.$router.push('/dashboard')
+        } else {
+          this.errorMessage = data.message
+        }
       } catch (error) {
-        console.error('Login failed', error)
+        this.errorMessage = 'An error occurred while logging in.'
       }
     }
   }

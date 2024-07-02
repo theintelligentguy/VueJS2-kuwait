@@ -1,24 +1,25 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const db = require('../models');
-
 const router = express.Router();
+const db = require('../models');
+const bcrypt = require('bcrypt');
 
+// Login
 router.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-    const user = await db.User.findOne({ where: { username } });
-    if (!user) {
-        return res.status(401).send('Invalid credentials');
-    }
+  const { username, password } = req.body;
+  const user = await db.User.findOne({ where: { username } });
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-        return res.status(401).send('Invalid credentials');
-    }
+  if (!user) {
+    return res.status(401).json({ message: 'Invalid username or password' });
+  }
 
-    const token = jwt.sign({ userId: user.id }, 'secretKey', { expiresIn: '1h' });
-    res.send({ token });
+  const isValidPassword = await bcrypt.compare(password, user.password);
+  if (!isValidPassword) {
+    return res.status(401).json({ message: 'Invalid username or password' });
+  }
+
+  const token = jwt.sign({ id: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
+  res.json({ token });
 });
 
 module.exports = router;
